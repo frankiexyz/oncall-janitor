@@ -27,33 +27,37 @@ def get_alert_details(fingerprint, firing_alerts):
                 return f"{alert['labels']['alertname']} summary {alert['annotations']['summary']}"
 
 
+def fetch_alertmanager(ALERTMGR_URL):
+    try:
+        alert_results = requests.get(ALERTMGR_URL).json()
+        return alert_results, [alert["fingerprint"] for alert in alert_results]
+    except Exception as e:
+        if "console" in globals():
+            console.log("Fail to access Alertmanager endpoint: {}".format(repr(e)))
+
+
+console = Console()
+
+
 @click.command()
 @click.option("--alertmanager", required=True)
 @click.option("--speak", default="speak", help="espeak or say")
 @click.option("--sleep", default=30, help="Sleep interval")
 def main(alertmanager, speak, sleep):
-    PROM_URL = alertmanager
+    ALERTMGR_URL = alertmanager
     SPEAKER = speak
     SLEEP_TIME = sleep
     alert_fingerprints = []
-    console = Console()
     console.log(":pray: Starting...")
-    console.log(f"Prometheus end-point {PROM_URL}")
-    prom_results = requests.get(PROM_URL).json()
-    for alert in prom_results:
-        alert_fingerprints.append(alert["fingerprint"])
+    console.log(f"Alertmanager end-point {ALERTMGR_URL}")
+    _, alert_fingerprints = fetch_alertmanager(ALERTMGR_URL)
     console.log(f":fire: There are {len(alert_fingerprints)} firing alerts")
-    console.log(":zzz: Sleep 30 seconds...")
-    time.sleep(30)
+    console.log(f":zzz: Sleep {SLEEP_TIME} seconds...")
+    time.sleep(SLEEP_TIME)
     while True:
         try:
-            prom_results = requests.get(PROM_URL).json()
-            new_alert_fingerprints = []
-            for alert in prom_results:
-                new_alert_fingerprints.append(alert["fingerprint"])
-
+            alert_results, new_alert_fingerprints = fetch_alertmanager(ALERTMGR_URL)
             diff_fingerprints = set(new_alert_fingerprints) - set(alert_fingerprints)
-
             diff_fingerprints = [
                 i for i in diff_fingerprints if "Interface_State_Changed_to" not in i
             ]
@@ -68,7 +72,7 @@ def main(alertmanager, speak, sleep):
                 os.system(f"{SPEAKER} '{message}' 2>/dev/null ")
                 time.sleep(1)
                 for diff_fingerprint in diff_fingerprints:
-                    message = get_alert_details(diff_fingerprint, prom_results)
+                    message = get_alert_details(diff_fingerprint, alert_results)
                     console.log(message)
                     os.system(f"{SPEAKER} 'alert {count} {message}' 2>/dev/null")
                     time.sleep(1)
