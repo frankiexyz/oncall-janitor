@@ -41,7 +41,7 @@ console = Console()
 
 @click.command()
 @click.option("--alertmanager", required=True)
-@click.option("--speak", default="speak", help="espeak or say")
+@click.option("--speak", default="espeak", help="espeak or say")
 @click.option("--sleep", default=30, help="Sleep interval")
 def main(alertmanager, speak, sleep):
     ALERTMGR_URL = alertmanager
