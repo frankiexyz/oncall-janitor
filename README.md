@@ -3,7 +3,7 @@ Let the company speak your alerts!
 
 
 ```
-pip install -r Requirements.txt
+pip install -r requirements.txt
 >python oncall-janitor.py --help
 Usage: oncall-janitor.py [OPTIONS]
 
