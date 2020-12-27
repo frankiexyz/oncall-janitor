@@ -1,5 +1,5 @@
 # oncall-janitor
-Let the company speak your alerts!
+Let the computer speak your alerts!
 
 
 ```
